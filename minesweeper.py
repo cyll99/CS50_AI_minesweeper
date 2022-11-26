@@ -196,17 +196,41 @@ class MinesweeperAI():
         self.moves_made.add(cell) # mark the cell as a move that has been made
         self.mark_safe(cell)    # mark the cell as safe
 
+        #updating any sentence containing the cell
+        for sentence in self.knowledge:
+            if cell in sentence.cells:
+                sentence.cells.remove(cell)
+
         # add a new sentence to the AI's knowledge base based on the value of `cell` and `count`
         cells = set()
-
+        
+        
         x,y = cell
+        
 
         for i in range(x-1, x+2):
             for j in range(y-1, y+2):
                 temp = (i,j)
                 if temp != cell and (temp not in self.moves_made and temp not in self.safes and temp not in self.mines ) :
                     cells.add(temp)
-        self.knowledge.append(Sentence(cells, count))
+        new_sentence = Sentence(cells,count)
+        self.knowledge.append(new_sentence)
+
+        # mark any additional cells as safe or as mines if it can be concluded based on the AI's knowledge base        
+
+        for sentence in self.knowledge:
+            if sentence.cells.issubset(new_sentence.cells):
+                new_cells = new_sentence.cells - sentence.cells
+                new_count = new_sentence.count - sentence.count
+                self.knowledge.append(Sentence(new_cells, new_count))
+
+            elif new_sentence.cells.issubset(sentence.cells):
+                new_cells = sentence.cells - new_sentence.cells
+                new_count = sentence.count - new_sentence.count
+                self.knowledge.append(Sentence(new_cells, new_count))
+
+                
+
 
     def make_safe_move(self):
         """
