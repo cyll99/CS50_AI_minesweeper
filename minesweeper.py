@@ -285,7 +285,7 @@ class MinesweeperAI():
         #Set the list of all potential moves
         potential_moves = [(i,j) for i in range(self.height) for j in range(self.width) if (i,j) not in self.mines and (i,j) not in self.moves_made]
 
-        if not self.potential_moves : return None
+        if not potential_moves : return None
 
         return random.choice(potential_moves)
 
