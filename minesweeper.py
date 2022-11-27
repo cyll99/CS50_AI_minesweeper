@@ -150,6 +150,9 @@ class MinesweeperAI():
         self.height = height
         self.width = width
 
+        #Set the list of all potential moves
+        self.potential_moves = [(i,j) for i in range(self.height) for j in range(self.width)]
+
         # Keep track of which cells have been clicked on
         self.moves_made = set()
 
@@ -160,12 +163,24 @@ class MinesweeperAI():
         # List of sentences about the game known to be true
         self.knowledge = []
 
+        #TEST--------------------------------TEST-----------------------------
+        print(self.potential_moves)
+        print(self.moves_made)
+        print(self.safes)
+        print(self.mines)
+
     def mark_mine(self, cell):
         """
         Marks a cell as a mine, and updates all knowledge
         to mark that cell as a mine as well.
         """
         self.mines.add(cell)
+
+        try:
+            self.potential_moves.remove(cell)
+        except:
+            ("Element not in the list")
+
         for sentence in self.knowledge:
             sentence.mark_mine(cell)
 
@@ -221,15 +236,27 @@ class MinesweeperAI():
         for sentence in self.knowledge:
             if sentence.cells.issubset(new_sentence.cells):
                 new_cells = new_sentence.cells - sentence.cells
+                safe_cells = new_sentence.cells.intersection(sentence.cells) 
                 new_count = new_sentence.count - sentence.count
-                self.knowledge.append(Sentence(new_cells, new_count))
+                self.knowledge.append(Sentence(new_cells, new_count)) #add a new sentence with the substraction of the sets
+                
+                for i in safe_cells:
+                    self.mark_safe(i)
+                
+                if len(new_cells) == new_count:
+                    for i in new_cells:
+                        self.mark_mine(i)
+
 
             elif new_sentence.cells.issubset(sentence.cells):
                 new_cells = sentence.cells - new_sentence.cells
                 new_count = sentence.count - new_sentence.count
-                self.knowledge.append(Sentence(new_cells, new_count))
+                self.knowledge.append(Sentence(new_cells, new_count)) #add a new sentence with the substraction of the sets
 
-                
+                if len(new_cells) == new_count:
+                    for i in new_cells:
+                        self.mark_mine(i)
+
 
 
     def make_safe_move(self):
@@ -243,6 +270,10 @@ class MinesweeperAI():
         """
         for cell in self.safes:
             if cell not in self.moves_made:
+                try:
+                    self.potential_moves.remove(cell)
+                except:
+                    print("Element not in the list")
                 return cell
         return None
 
@@ -253,4 +284,7 @@ class MinesweeperAI():
             1) have not already been chosen, and
             2) are not known to be mines
         """
-        raise NotImplementedError
+        random_move = random.choice(self.potential_moves)
+        self.potential_moves.remove(random_move)
+        return random_move
+
