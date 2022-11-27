@@ -94,8 +94,7 @@ class Sentence():
     def __init__(self, cells, count):
         self.cells = set(cells)
         self.count = count
-        self.mines = set()
-        self.safe = set()
+      
 
     def __eq__(self, other):
         return self.cells == other.cells and self.count == other.count
@@ -108,16 +107,15 @@ class Sentence():
         Returns the set of all cells in self.cells known to be mines.
         """
         if len(self.cells) == self.count:
-            self.mines.add(i for i in self.cells)
-        return self.mines
+            return self.cells
+
 
     def known_safes(self):
         """
         Returns the set of all cells in self.cells known to be safe.
         """
-        if len(self.cells) == 0:
-            self.safe.add(i for i in self.cells)
-        return self.safe
+        if self.count == 0:
+            return self.safe
 
     def mark_mine(self, cell):
         """
@@ -125,9 +123,8 @@ class Sentence():
         a cell is known to be a mine.
         """
         if cell in self.cells:
-            mine = self.cells.remove(cell)
+            self.cells.remove(cell)
             self.count -= 1
-            self.mines.add(mine)
 
     def mark_safe(self, cell):
         """
@@ -135,8 +132,7 @@ class Sentence():
         a cell is known to be safe.
         """
         if cell in self.cells:
-            safe = self.cells.remove(cell)
-            self.safe.add(safe)
+            self.cells.remove(cell)
 
 
 class MinesweeperAI():
@@ -150,9 +146,6 @@ class MinesweeperAI():
         self.height = height
         self.width = width
 
-        #Set the list of all potential moves
-        self.potential_moves = [(i,j) for i in range(self.height) for j in range(self.width)]
-
         # Keep track of which cells have been clicked on
         self.moves_made = set()
 
@@ -163,11 +156,7 @@ class MinesweeperAI():
         # List of sentences about the game known to be true
         self.knowledge = []
 
-        #TEST--------------------------------TEST-----------------------------
-        print(self.potential_moves)
-        print(self.moves_made)
-        print(self.safes)
-        print(self.mines)
+
 
     def mark_mine(self, cell):
         """
@@ -175,11 +164,6 @@ class MinesweeperAI():
         to mark that cell as a mine as well.
         """
         self.mines.add(cell)
-
-        try:
-            self.potential_moves.remove(cell)
-        except:
-            ("Element not in the list")
 
         for sentence in self.knowledge:
             sentence.mark_mine(cell)
@@ -226,8 +210,10 @@ class MinesweeperAI():
         for i in range(x-1, x+2):
             for j in range(y-1, y+2):
                 temp = (i,j)
-                if temp != cell and (temp not in self.moves_made and temp not in self.safes and temp not in self.mines ) :
+                if temp != cell and (temp not in self.moves_made and temp not in self.safes ) :
                     cells.add(temp)
+                elif temp in self.mines:
+                    count -= 1
         new_sentence = Sentence(cells,count)
         self.knowledge.append(new_sentence)
 
@@ -257,6 +243,19 @@ class MinesweeperAI():
                     for i in new_cells:
                         self.mark_mine(i)
 
+        # Removes redondant sentences
+        unique_knowledge = set(self.knowledge)
+        self.knowledge = list(unique_knowledge)
+
+        #remove all cells known being safe or mine by inferrence
+        for item in self.knowledge:
+            if item.known_mines():
+                self.mines.add(mine for mine in item.known_mines())
+                self.knowledge.remove(item)
+            elif item.known_safes():
+                self.safes.add(safe for safe in item.known_safes())
+                self.knowledge.remove(item)   
+
 
 
     def make_safe_move(self):
@@ -268,14 +267,13 @@ class MinesweeperAI():
         This function may use the knowledge in self.mines, self.safes
         and self.moves_made, but should not modify any of those values.
         """
-        for cell in self.safes:
-            if cell not in self.moves_made:
-                try:
-                    self.potential_moves.remove(cell)
-                except:
-                    print("Element not in the list")
-                return cell
-        return None
+        safe_moves = self.safes - self.moves_made
+
+        if not safe_moves: return None #returns None if the set is empty
+
+        move = safe_moves.pop()
+     
+        return move
 
     def make_random_move(self):
         """
@@ -284,7 +282,10 @@ class MinesweeperAI():
             1) have not already been chosen, and
             2) are not known to be mines
         """
-        random_move = random.choice(self.potential_moves)
-        self.potential_moves.remove(random_move)
-        return random_move
+        #Set the list of all potential moves
+        potential_moves = [(i,j) for i in range(self.height) for j in range(self.width) if (i,j) not in self.mines and (i,j) not in self.moves_made]
+
+        if not self.potential_moves : return None
+
+        return random.choice(potential_moves)
 
