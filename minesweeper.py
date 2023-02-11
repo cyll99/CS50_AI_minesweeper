@@ -108,6 +108,7 @@ class Sentence():
         """
         if len(self.cells) == self.count:
             return self.cells
+        return None
 
 
     def known_safes(self):
@@ -116,6 +117,7 @@ class Sentence():
         """
         if self.count == 0:
             return self.safe
+        return None
 
     def mark_mine(self, cell):
         """
@@ -272,6 +274,7 @@ class MinesweeperAI():
         if not safe_moves: return None #returns None if the set is empty
 
         move = safe_moves.pop()
+        print(move)
      
         return move
 
@@ -286,6 +289,7 @@ class MinesweeperAI():
         potential_moves = [(i,j) for i in range(self.height) for j in range(self.width) if (i,j) not in self.mines and (i,j) not in self.moves_made]
 
         if not potential_moves : return None
-
-        return random.choice(potential_moves)
+        a = random.choice(potential_moves)
+        print(a)
+        return a
 
